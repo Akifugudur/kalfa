@@ -1,0 +1,23 @@
+{
+  "expo": {
+    "name": "Kalfa",
+    "slug": "kalfa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#1D9E75"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.kalfa.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#1D9E75"
+      },
+      "package": "com.kalfa.app"
+    }
+  }
+}
