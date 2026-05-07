@@ -1,0 +1,44 @@
+# ─── Python / Backend ───────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.so
+.env
+.env.*
+!.env.example
+*.log
+
+# ─── Docker ─────────────────────────────────────────
+.dockerignore
+
+# ─── Node / Expo / React Native ─────────────────────
+kalfa-mobile/node_modules/
+kalfa-mobile/.expo/
+kalfa-mobile/dist/
+kalfa-mobile/.metro-health-check*
+kalfa-mobile/android/
+kalfa-mobile/ios/
+
+# ─── Expo builds ────────────────────────────────────
+*.ipa
+*.apk
+*.aab
+
+# ─── OS / Editor ────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─── Data / Secrets ─────────────────────────────────
+*.csv
+*.sqlite
+*.db
+CLAUDE.md
