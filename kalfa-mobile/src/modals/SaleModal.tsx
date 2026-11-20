@@ -10,7 +10,7 @@ import ModalSheet from '../components/ModalSheet';
 import StockBadge from '../components/StockBadge';
 import { useApi } from '../hooks/useApi';
 import { Colors, FontSize, Radius, Spacing } from '../theme/colors';
-import type { ProductListItem } from '../types/api';
+import type { PaymentMethod, ProductListItem } from '../types/api';
 import type { RootStackScreenProps } from '../navigation/types';
 
 type Step = 'pick' | 'enter' | 'done';
@@ -22,7 +22,11 @@ export default function SaleModal({ navigation }: RootStackScreenProps<'SaleModa
   const [price, setPrice] = useState('');
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
-  const [lastSale, setLastSale] = useState<{ qty: number; price: number } | null>(null);
+  const [customer, setCustomer] = useState('');
+  const [method, setMethod] = useState<PaymentMethod>('cash');
+  const [lastSale, setLastSale] = useState<{
+    qty: number; price: number; method: PaymentMethod; customer: string;
+  } | null>(null);
 
   const { data: products } = useApi(
     () => productsApi.list({ search: search || undefined }),
@@ -35,10 +39,15 @@ export default function SaleModal({ navigation }: RootStackScreenProps<'SaleModa
     const p = parseFloat(price);
     if (!q || q <= 0) { Alert.alert('Hata', 'Gecerli bir miktar girin'); return; }
     if (!p || p <= 0) { Alert.alert('Hata', 'Gecerli bir fiyat girin'); return; }
+    const c = customer.trim();
+    if (method === 'credit' && !c) { Alert.alert('Hata', 'Veresiye icin musteri adi girin'); return; }
     setSaving(true);
     try {
-      await transactionsApi.sale({ product_id: selected.id, quantity: q, sale_price: p });
-      setLastSale({ qty: q, price: p });
+      await transactionsApi.sale({
+        product_id: selected.id, quantity: q, sale_price: p,
+        payment_method: method, customer_name: c || undefined,
+      });
+      setLastSale({ qty: q, price: p, method, customer: c });
       setStep('done');
     } catch (e: unknown) {
       Alert.alert('Hata', e instanceof Error ? e.message : 'Islem basarisiz');
@@ -82,6 +91,11 @@ export default function SaleModal({ navigation }: RootStackScreenProps<'SaleModa
           <Text style={styles.doneTotal}>
             Toplam: {(lastSale.qty * lastSale.price).toLocaleString('tr-TR')} TL
           </Text>
+          <Text style={styles.doneAmount}>
+            {lastSale.method === 'credit'
+              ? `Veresiye — ${lastSale.customer} hesabina borc yazildi`
+              : lastSale.customer ? `Nakit — ${lastSale.customer}` : 'Nakit'}
+          </Text>
         </View>
         <TouchableOpacity style={styles.invoiceBtn} onPress={handleCreateInvoice}>
           <Text style={styles.invoiceBtnText}>Fatura Olustur ve Paylas</Text>
@@ -114,6 +128,28 @@ export default function SaleModal({ navigation }: RootStackScreenProps<'SaleModa
           style={styles.input} value={price} onChangeText={setPrice}
           keyboardType="decimal-pad" placeholder={String(selected.sale_price)}
           placeholderTextColor={Colors.textTertiary}
+        />
+        <Text style={styles.fieldLabel}>ODEME</Text>
+        <View style={styles.methodRow}>
+          {(['cash', 'credit'] as const).map((m) => (
+            <TouchableOpacity
+              key={m}
+              style={[styles.methodBtn, method === m && styles.methodBtnActive]}
+              onPress={() => setMethod(m)}
+            >
+              <Text style={[styles.methodText, method === m && styles.methodTextActive]}>
+                {m === 'cash' ? 'Nakit' : 'Veresiye'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <Text style={styles.fieldLabel}>
+          {method === 'credit' ? 'MUSTERI (ZORUNLU)' : 'MUSTERI (ISTEGE BAGLI)'}
+        </Text>
+        <TextInput
+          style={styles.input} value={customer} onChangeText={setCustomer}
+          placeholder="or. Tamirci Huseyin" placeholderTextColor={Colors.textTertiary}
+          autoCapitalize="words"
         />
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={saving}>
           <Text style={styles.saveBtnText}>{saving ? 'Kaydediliyor...' : 'Satisi Kaydet'}</Text>
@@ -191,6 +227,14 @@ const styles = StyleSheet.create({
     padding: Spacing.md, fontSize: FontSize.md, color: Colors.textPrimary,
     backgroundColor: Colors.surface, height: 48,
   },
+  methodRow: { flexDirection: 'row', gap: Spacing.sm },
+  methodBtn: {
+    flex: 1, height: 48, borderRadius: Radius.md, borderWidth: 0.5, borderColor: Colors.border,
+    alignItems: 'center', justifyContent: 'center', backgroundColor: Colors.surface,
+  },
+  methodBtnActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  methodText: { fontSize: FontSize.md, fontWeight: '600', color: Colors.textSecondary },
+  methodTextActive: { color: Colors.white },
   saveBtn: {
     backgroundColor: Colors.primary, borderRadius: Radius.md, height: 52,
     alignItems: 'center', justifyContent: 'center', marginTop: Spacing.lg,

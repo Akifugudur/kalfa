@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.models.debt import Debt, DebtDirection
+from app.services.sale_service import apply_payment_to_debt, build_collection
 from app.schemas.debt import DebtCreate, DebtPartialPayment, DebtResponse, DebtUpdate
 
 router = APIRouter()
@@ -74,19 +75,12 @@ async def partial_payment(
     debt = result.scalar_one_or_none()
     if not debt:
         raise HTTPException(status_code=404, detail="Borç/alacak bulunamadı")
-    if debt.is_paid:
-        raise HTTPException(status_code=400, detail="Bu borç zaten ödenmiş")
-    if data.paid_amount > debt.remaining_amount:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Ödeme tutarı kalan miktardan büyük ({debt.remaining_amount} TL)",
-        )
+    apply_payment_to_debt(debt, data.paid_amount)
 
-    debt.remaining_amount = round(float(debt.remaining_amount) - data.paid_amount, 2)
-    if debt.remaining_amount <= 0:
-        debt.remaining_amount = 0
-        debt.is_paid = True
-    debt.updated_at = datetime.now(timezone.utc)
+    # Müşteriden alınan para kasaya girdi: tahsilat olarak da kaydet
+    if debt.direction == DebtDirection.THEY_OWE:
+        db.add(build_collection(data.paid_amount, debt.person_name, debt.id, data.note))
+
     if data.note and not debt.note:
         debt.note = data.note
 

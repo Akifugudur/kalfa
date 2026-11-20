@@ -16,6 +16,11 @@ class TransactionType(str, Enum):
     OTHER_INCOME = "other_income"  # Serbest gelir
 
 
+class PaymentMethod(str, Enum):
+    CASH = "cash"      # Nakit — para hemen alındı
+    CREDIT = "credit"  # Veresiye — müşteriye borç yazıldı
+
+
 class ExpenseCategory(str, Enum):
     CREDIT_CARD = "credit_card"
     FOOD = "food"
@@ -57,8 +62,11 @@ class Transaction(Base):
         Numeric(12, 2), nullable=True
     )
     profit: Mapped[float | None] = mapped_column(Numeric(12, 2), nullable=True)
+    payment_method: Mapped[PaymentMethod] = mapped_column(
+        String(20), default=PaymentMethod.CASH, server_default="cash", nullable=False
+    )  # Satışta: nakit mi veresiye mi
 
-    # Tahsilat bilgileri (type == COLLECTION ise dolu)
+    # Satışta müşteri adı, tahsilatta kimden alındığı
     related_person: Mapped[str | None] = mapped_column(String(200), nullable=True)
     related_debt_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), nullable=True

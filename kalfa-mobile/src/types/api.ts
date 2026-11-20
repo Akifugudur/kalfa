@@ -68,16 +68,22 @@ export interface Transaction {
   purchase_price_snapshot: number | null;
   sale_price_snapshot: number | null;
   profit: number | null;
+  payment_method: PaymentMethod;
   related_person: string | null;
+  related_debt_id: string | null;
   transaction_date: string;
   created_at: string;
   is_income: boolean;
 }
 
+export type PaymentMethod = 'cash' | 'credit';
+
 export interface CreateSalePayload {
   product_id: string;
   quantity: number;
   sale_price: number;
+  payment_method: PaymentMethod;
+  customer_name?: string;
   note?: string;
   transaction_date?: string;
 }
