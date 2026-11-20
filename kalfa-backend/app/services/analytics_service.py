@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.debt import Debt, DebtDirection
 from app.models.payment_reminder import PaymentReminder
 from app.models.product import Product
-from app.models.transaction import Transaction, TransactionType
+from app.models.transaction import PaymentMethod, Transaction, TransactionType
 from app.schemas.analytics import (
     AnalyticsDashboard,
     CategoryStat,
@@ -27,6 +27,7 @@ async def get_monthly_summary(
     result = await db.execute(
         select(
             Transaction.type,
+            Transaction.payment_method,
             func.sum(Transaction.amount).label("total"),
             func.sum(Transaction.profit).label("profit"),
             func.count(Transaction.id).label("count"),
@@ -37,7 +38,7 @@ async def get_monthly_summary(
                 Transaction.transaction_date <= end,
             )
         )
-        .group_by(Transaction.type)
+        .group_by(Transaction.type, Transaction.payment_method)
     )
     rows = result.all()
 
@@ -54,7 +55,9 @@ async def get_monthly_summary(
             total_sales += total
             total_profit += profit
             sale_count += count
-            total_income += total
+            # Veresiye satış kasaya para sokmaz; para tahsilatta gelir olarak sayılır
+            if row.payment_method != PaymentMethod.CREDIT:
+                total_income += total
         elif t == TransactionType.EXPENSE:
             total_expenses += total
             expense_count += count
