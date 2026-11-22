@@ -8,7 +8,7 @@ import { shopApi } from '../api/shop';
 import { createAndShareInvoice } from '../utils/invoice';
 import ModalSheet from '../components/ModalSheet';
 import StockBadge from '../components/StockBadge';
-import { useApi } from '../hooks/useApi';
+import { useDebouncedValue, usePagedList } from '../hooks/usePagedList';
 import { Colors, FontSize, Radius, Spacing } from '../theme/colors';
 import type { PaymentMethod, ProductListItem } from '../types/api';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -28,9 +28,10 @@ export default function SaleModal({ navigation }: RootStackScreenProps<'SaleModa
     qty: number; price: number; method: PaymentMethod; customer: string;
   } | null>(null);
 
-  const { data: products } = useApi(
-    () => productsApi.list({ search: search || undefined }),
-    [search]
+  const query = useDebouncedValue(search.trim());
+  const { items: products, loadMore } = usePagedList(
+    (skip, limit) => productsApi.list({ search: query || undefined, skip, limit }),
+    [query]
   );
 
   const handleSave = async () => {
@@ -170,9 +171,11 @@ export default function SaleModal({ navigation }: RootStackScreenProps<'SaleModa
         />
       </View>
       <FlatList
-        data={products ?? []}
+        data={products}
         keyExtractor={(i) => i.id}
         style={{ maxHeight: 360 }}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
         renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.productRow}

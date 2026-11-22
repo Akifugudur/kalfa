@@ -15,7 +15,8 @@ import { productsApi } from '../api/products';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import StockBadge from '../components/StockBadge';
-import { useApi, formatCurrency } from '../hooks/useApi';
+import { formatCurrency } from '../hooks/useApi';
+import { useDebouncedValue, usePagedList } from '../hooks/usePagedList';
 import { Colors, FontSize, Radius, Spacing } from '../theme/colors';
 import type { ProductListItem } from '../types/api';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -42,12 +43,24 @@ export default function InventoryScreen() {
   const navigation = useNavigation<RootStackScreenProps<'Tabs'>['navigation']>();
   const [search, setSearch] = useState('');
 
-  const { data: products, loading, refetch } = useApi(
-    () => productsApi.list({ search: search || undefined }),
-    [search]
+  const query = useDebouncedValue(search.trim());
+
+  const { items: products, loading, loadingMore, reload, loadMore } = usePagedList(
+    (skip, limit) => productsApi.list({ search: query || undefined, skip, limit }),
+    [query]
   );
 
-  useFocusEffect(useCallback(() => { refetch(); }, [refetch]));
+  // Coming back from "add product" / a sale: show fresh stock numbers.
+  const firstFocus = React.useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (firstFocus.current) {
+        firstFocus.current = false;
+        return;
+      }
+      reload();
+    }, [reload])
+  );
 
   const renderItem = useCallback(({ item }: { item: ProductListItem }) => (
     <Card
@@ -102,19 +115,26 @@ export default function InventoryScreen() {
         )}
       </View>
 
-      {loading && !products ? (
+      {loading && products.length === 0 ? (
         <View style={styles.centered}>
           <ActivityIndicator color={Colors.primary} />
         </View>
       ) : (
         <FlatList
-          data={products ?? []}
+          data={products}
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
           refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={refetch} tintColor={Colors.primary} />
+            <RefreshControl refreshing={loading} onRefresh={reload} tintColor={Colors.primary} />
+          }
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <ActivityIndicator color={Colors.primary} style={{ marginVertical: Spacing.lg }} />
+            ) : null
           }
           ListEmptyComponent={
             <EmptyState

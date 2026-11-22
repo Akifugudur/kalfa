@@ -9,7 +9,12 @@ import type {
 } from '../types/api';
 
 export const productsApi = {
-  list: async (params?: { search?: string; low_stock_only?: boolean }) => {
+  list: async (params?: {
+    search?: string;
+    low_stock_only?: boolean;
+    skip?: number;
+    limit?: number;
+  }) => {
     const res = await apiClient.get<ProductListItem[]>('/products/', { params });
     return res.data;
   },
