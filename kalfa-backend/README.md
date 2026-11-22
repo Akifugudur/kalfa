@@ -1,142 +1,86 @@
-# Kalfa Backend
+# Kalfa API
 
-FastAPI + PostgreSQL + Docker ile yazılmış Kalfa iş yönetimi API'si.
+FastAPI + PostgreSQL backend for the Kalfa shop app. See the [main README](../README.md) for the overall project.
 
-## Hızlı Başlangıç
+## Run
 
 ```bash
-# 1. Env dosyasını oluştur
 cp .env.example .env
-
-# 2. Docker ile başlat (PostgreSQL + API)
-docker-compose up --build
-
-# 3. API çalışıyor mu kontrol et
+docker compose up --build
 curl http://localhost:8000/health
-
-# 4. Swagger UI
-open http://localhost:8000/docs
 ```
 
-## Lokal Geliştirme (Docker olmadan)
+Swagger UI: `http://localhost:8000/docs`
+
+Without Docker (PostgreSQL connection in `.env`):
 
 ```bash
 pip install -r requirements.txt
-
-# PostgreSQL bağlantısını .env'e yaz, sonra:
 uvicorn app.main:app --reload
 ```
 
-## API Endpoint'leri
+### Configuration (`.env`)
 
-### Mağaza & Onboarding
-| Method | URL | Açıklama |
-|--------|-----|----------|
-| POST | `/api/shop/onboarding` | İlk kurulum (profil + hatırlatıcılar) |
-| GET | `/api/shop/` | Mağaza profilini getir |
-| PATCH | `/api/shop/` | Mağaza profilini güncelle |
-| GET | `/api/shop/employees` | Çalışanları listele |
-| POST | `/api/shop/employees` | Çalışan ekle |
+| Variable | Default | |
+|---|---|---|
+| `DATABASE_URL` | `postgresql+asyncpg://kalfa:kalfa_secret@localhost:5432/kalfa_db` | |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `kalfa` / `kalfa_secret` / `kalfa_db` | used by Docker Compose |
+| `DB_PORT` | `5432` | host port for PostgreSQL (bound to localhost only) |
+| `TIMEZONE` | `Europe/Istanbul` | time zone for business dates |
+| `ENVIRONMENT` | `development` | `development` logs SQL |
 
-### Ürünler & Stok
-| Method | URL | Açıklama |
-|--------|-----|----------|
-| GET | `/api/products/` | Ürünleri listele (arama + filtre) |
-| POST | `/api/products/` | Yeni ürün ekle |
-| GET | `/api/products/{id}` | Ürün detayı |
-| PATCH | `/api/products/{id}` | Ürün güncelle |
-| DELETE | `/api/products/{id}` | Ürünü devre dışı bırak |
-| POST | `/api/products/{id}/add-stock` | Stok ekle |
-| POST | `/api/products/{id}/sell` | **Sat** → stok düşer + gelir kaydı oluşur |
+## Endpoints
 
-### İşlemler (Gelir / Gider)
-| Method | URL | Açıklama |
-|--------|-----|----------|
-| GET | `/api/transactions/` | İşlem listesi (tarih + tip filtresi) |
-| POST | `/api/transactions/sale` | Satış kaydı |
-| POST | `/api/transactions/collection` | Tahsilat kaydı |
-| POST | `/api/transactions/expense` | Gider kaydı |
+### Shop and onboarding
+| Method | Path | |
+|---|---|---|
+| POST | `/api/shop/onboarding` | First setup: shop profile and monthly payment reminders |
+| GET / PATCH | `/api/shop/` | Shop profile |
+| GET / POST | `/api/shop/employees` | Employees |
 
-### Borç & Alacak
-| Method | URL | Açıklama |
-|--------|-----|----------|
-| GET | `/api/debts/` | Borç/alacak listesi |
-| POST | `/api/debts/` | Yeni borç/alacak ekle |
-| PATCH | `/api/debts/{id}` | Güncelle |
-| POST | `/api/debts/{id}/pay` | Kısmi veya tam ödeme yap |
-| DELETE | `/api/debts/{id}` | Sil |
+### Products and stock
+| Method | Path | |
+|---|---|---|
+| GET | `/api/products/` | List, with `search`, `low_stock_only`, `skip`, `limit` (max 200) |
+| POST | `/api/products/` | Create |
+| GET / PATCH / DELETE | `/api/products/{id}` | Read, update, deactivate |
+| POST | `/api/products/{id}/add-stock` | Restock, optionally with a new purchase price |
+| POST | `/api/products/{id}/sell` | Sell: lowers stock and books the sale |
 
-### Hatırlatıcılar
-| Method | URL | Açıklama |
-|--------|-----|----------|
-| GET | `/api/reminders/` | Hatırlatıcıları listele |
-| POST | `/api/reminders/` | Yeni hatırlatıcı ekle |
-| PATCH | `/api/reminders/{id}` | Güncelle / ödenmiş olarak işaretle |
-| DELETE | `/api/reminders/{id}` | Sil |
+### Transactions
+| Method | Path | |
+|---|---|---|
+| GET | `/api/transactions/` | List, filter by `type` and date range |
+| POST | `/api/transactions/sale` | Sale, cash or on credit (`payment_method: credit` opens a receivable) |
+| POST | `/api/transactions/collection` | Money collected, optionally against a receivable |
+| POST | `/api/transactions/expense` | Expense with category |
 
-### Analiz
-| Method | URL | Açıklama |
-|--------|-----|----------|
-| GET | `/api/analytics/home` | Ana sayfa özeti (bu ay kar/zarar, alacak, borç) |
-| GET | `/api/analytics/dashboard` | Aylık dashboard (en çok satanlar, gider dağılımı) |
+### Debts and receivables
+| Method | Path | |
+|---|---|---|
+| GET / POST | `/api/debts/` | List / create |
+| GET / PATCH / DELETE | `/api/debts/{id}` | Read, edit (amount keeps the paid part), delete |
+| POST | `/api/debts/{id}/pay` | Partial or full payment |
 
-## Kritik Tasarım Kararları
+### Reminders and analytics
+| Method | Path | |
+|---|---|---|
+| GET / POST / PATCH / DELETE | `/api/reminders/…` | Upcoming fixed payments |
+| GET | `/api/analytics/home` | This month's totals, receivables, debts, recent activity |
+| GET | `/api/analytics/dashboard?year=&month=` | Monthly summary, top products, expenses by category |
 
-### Atomik Satış İşlemi
-`POST /api/products/{id}/sell` tek bir DB transaction içinde:
-1. Stok yeterliliğini kontrol eder
-2. `products.stock_quantity` değerini düşürür
-3. Kar hesaplayıp `transactions` tablosuna yazar
+## Design notes
 
-Birisi başarısız olursa ikisi de geri alınır — tutarsız veri olmaz.
+- **Atomic sales.** Stock check, stock change, sale record and (for credit sales) the receivable are one database transaction. The product row is locked with `SELECT … FOR UPDATE`, so concurrent sales queue up instead of overselling.
+- **One transactions table.** Sales, collections, other income and expenses share a table with a `type` column.
+- **Debts stay consistent.** Remaining amount and paid flag change only through payments; editing the amount keeps what was already paid; deleting a debt keeps the sales that referenced it.
+- **Local business dates.** Dates are taken in the shop's time zone.
 
-### Birleşik Transaction Modeli
-`Sale` + `Income` ayrı tablolar yerine tek `transactions` tablosu, `type` alanıyla ayrılır:
-- `sale` → Satış (stok düşer)
-- `collection` → Tahsilat
-- `expense` → Gider
-- `other_income` → Serbest gelir
+## Tests
 
-### Borç Modeli
-`CreditCardDebt` ayrı tablo değil — `Debt` modeli `debt_type` alanıyla hem kişi borcunu hem kredi kartını karşılar.
-
-## Proje Yapısı
-
+```bash
+pip install -r requirements-dev.txt
+docker run -d --rm -p 55432:5432 -e POSTGRES_PASSWORD=test postgres:16-alpine
+TEST_DATABASE_URL=postgresql+asyncpg://postgres:test@localhost:55432/postgres pytest
+ruff check app tests
 ```
-app/
-├── main.py          # FastAPI app, middleware, router
-├── db.py            # Async SQLAlchemy engine & session
-├── config.py        # Pydantic Settings (.env okur)
-├── models/          # SQLAlchemy ORM modelleri
-│   ├── product.py
-│   ├── transaction.py
-│   ├── debt.py
-│   ├── payment_reminder.py
-│   ├── shop_profile.py
-│   └── employee.py
-├── schemas/         # Pydantic v2 request/response şemaları
-│   ├── product.py
-│   ├── transaction.py
-│   ├── debt.py
-│   ├── shop.py
-│   └── analytics.py
-├── routes/          # FastAPI router'ları
-│   ├── products.py
-│   ├── transactions.py
-│   ├── debts.py
-│   ├── reminders.py
-│   ├── analytics.py
-│   └── shop.py
-└── services/        # İş mantığı katmanı
-    ├── product_service.py
-    ├── sale_service.py      ← atomik satış burada
-    └── analytics_service.py
-```
-
-## Sonraki Adımlar
-
-- [ ] React Native frontend bağlantısı
-- [ ] Alembic migration kurulumu
-- [ ] JWT authentication
-- [ ] Push notification servisi (yaklaşan ödemeler için)
-- [ ] Unit testler (pytest-asyncio)
