@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
   backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   closeIcon: { fontSize: 18, color: Colors.textPrimary },
   headerTitle: { fontSize: FontSize.lg, fontWeight: '600', color: Colors.textPrimary },
-  saveText: { fontSize: FontSize.md, color: Colors.primary, fontWeight: '600' },
+  saveText: { fontSize: FontSize.md, color: Colors.accent, fontWeight: '600' },
   scroll: { padding: Spacing.lg, gap: Spacing.md },
   field: { gap: Spacing.xs },
   fieldLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', letterSpacing: 0.5 },

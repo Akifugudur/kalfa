@@ -34,10 +34,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.sm,
     marginBottom: Spacing.xs,
   },
-  incomeRow: { backgroundColor: Colors.primaryLight },
+  incomeRow: { backgroundColor: Colors.successLight },
   expenseRow: { backgroundColor: Colors.dangerLight },
   label: { fontSize: FontSize.sm, flex: 1 },
   amount: { fontSize: FontSize.sm, fontWeight: '600' },
-  incomeText: { color: Colors.primaryMid },
+  incomeText: { color: Colors.successMid },
   expenseText: { color: Colors.dangerMid },
 });

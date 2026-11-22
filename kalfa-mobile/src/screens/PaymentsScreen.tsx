@@ -35,13 +35,13 @@ function DebtCard({ debt, onPay }: { debt: Debt; onPay: () => void }) {
         <View
           style={[
             styles.avatar,
-            { backgroundColor: isReceivable ? Colors.primaryLight : Colors.dangerLight },
+            { backgroundColor: isReceivable ? Colors.successLight : Colors.dangerLight },
           ]}
         >
           <Text
             style={[
               styles.avatarText,
-              { color: isReceivable ? Colors.primaryMid : Colors.dangerMid },
+              { color: isReceivable ? Colors.successMid : Colors.dangerMid },
             ]}
           >
             {initials}
@@ -57,7 +57,7 @@ function DebtCard({ debt, onPay }: { debt: Debt; onPay: () => void }) {
           <Text
             style={[
               styles.debtAmount,
-              { color: isReceivable ? Colors.primaryMid : Colors.dangerMid },
+              { color: isReceivable ? Colors.successMid : Colors.dangerMid },
             ]}
           >
             {formatCurrency(debt.remaining_amount)}
@@ -116,7 +116,7 @@ export default function PaymentsScreen() {
   if (loading && !allDebts) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={Colors.primary} />
+        <ActivityIndicator color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -137,7 +137,7 @@ export default function PaymentsScreen() {
 
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} tintColor={Colors.primary} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         {/* Özet */}
         <View style={styles.summaryRow}>
@@ -147,9 +147,9 @@ export default function PaymentsScreen() {
               {formatCurrency(totalDebt)}
             </Text>
           </Card>
-          <Card style={[styles.summaryCard, { backgroundColor: Colors.primaryLight }]}>
-            <Text style={[styles.summaryLabel, { color: Colors.primaryMid }]}>ALACAK</Text>
-            <Text style={[styles.summaryAmount, { color: Colors.primaryDark }]}>
+          <Card style={[styles.summaryCard, { backgroundColor: Colors.successLight }]}>
+            <Text style={[styles.summaryLabel, { color: Colors.successMid }]}>ALACAK</Text>
+            <Text style={[styles.summaryAmount, { color: Colors.successDark }]}>
               {formatCurrency(totalReceivable)}
             </Text>
           </Card>
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   debtRight: { alignItems: 'flex-end', gap: 4 },
   debtAmount: { fontSize: FontSize.md, fontWeight: '700' },
   collectBtn: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.success,
     borderRadius: Radius.sm,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,

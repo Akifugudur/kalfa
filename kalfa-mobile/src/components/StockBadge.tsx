@@ -15,13 +15,13 @@ export default function StockBadge({ quantity, unit, isLow }: StockBadgeProps) {
     ? Colors.surfaceSecondary
     : isLow
     ? Colors.warningLight
-    : Colors.primaryLight;
+    : Colors.successLight;
 
   const color = outOfStock
     ? Colors.textTertiary
     : isLow
     ? Colors.warning
-    : Colors.primaryMid;
+    : Colors.successMid;
 
   const label = outOfStock ? 'Tükendi' : `${quantity} ${unit}`;
 

@@ -80,7 +80,7 @@ export default function ProductDetailScreen({ route, navigation }: RootStackScre
   };
 
   if (loading || !product) {
-    return <SafeAreaView style={styles.centered}><ActivityIndicator color={Colors.primary} /></SafeAreaView>;
+    return <SafeAreaView style={styles.centered}><ActivityIndicator color={Colors.accent} /></SafeAreaView>;
   }
 
   return (

@@ -117,7 +117,7 @@ export default function InventoryScreen() {
 
       {loading && products.length === 0 ? (
         <View style={styles.centered}>
-          <ActivityIndicator color={Colors.primary} />
+          <ActivityIndicator color={Colors.accent} />
         </View>
       ) : (
         <FlatList
@@ -127,13 +127,13 @@ export default function InventoryScreen() {
           contentContainerStyle={styles.list}
           ItemSeparatorComponent={() => <View style={{ height: Spacing.sm }} />}
           refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={reload} tintColor={Colors.primary} />
+            <RefreshControl refreshing={loading} onRefresh={reload} tintColor={Colors.accent} />
           }
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator color={Colors.primary} style={{ marginVertical: Spacing.lg }} />
+              <ActivityIndicator color={Colors.accent} style={{ marginVertical: Spacing.lg }} />
             ) : null
           }
           ListEmptyComponent={

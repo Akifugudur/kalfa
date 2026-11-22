@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     flex: 1, height: 4, borderRadius: Radius.full,
     backgroundColor: Colors.border,
   },
-  progressDotActive: { backgroundColor: Colors.primary },
+  progressDotActive: { backgroundColor: Colors.accent },
   scroll: { padding: Spacing.lg, gap: Spacing.xl },
   headerSection: { gap: Spacing.xs, marginTop: Spacing.lg },
   logo: { width: '70%', height: 70, alignSelf: 'center', marginBottom: Spacing.md },

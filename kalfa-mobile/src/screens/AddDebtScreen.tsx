@@ -79,7 +79,7 @@ export default function AddDebtScreen({ route, navigation }: RootStackScreenProp
           </View>
 
           <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: isReceivable ? Colors.primary : Colors.danger }]}
+            style={[styles.saveBtn, { backgroundColor: isReceivable ? Colors.success : Colors.danger }]}
             onPress={handleSave}
             disabled={saving}
           >

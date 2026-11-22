@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { analyticsApi } from '../api/analytics';
 import Card from '../components/Card';
@@ -39,15 +41,23 @@ function BarRow({ label, amount, max, color }: { label: string; amount: number; 
 
 export default function AnalyticsScreen() {
   const now = new Date();
+  const [period, setPeriod] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
+  const isCurrentMonth = period.year === now.getFullYear() && period.month === now.getMonth() + 1;
+  const shiftMonth = (delta: number) =>
+    setPeriod(({ year, month }) => {
+      const d = new Date(year, month - 1 + delta, 1);
+      return { year: d.getFullYear(), month: d.getMonth() + 1 };
+    });
+
   const { data, loading, refetch } = useApi(
-    () => analyticsApi.dashboard(now.getFullYear(), now.getMonth() + 1),
-    []
+    () => analyticsApi.dashboard(period.year, period.month),
+    [period.year, period.month]
   );
 
   if (loading && !data) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+        <ActivityIndicator color={Colors.accent} size="large" />
       </SafeAreaView>
     );
   }
@@ -62,23 +72,38 @@ export default function AnalyticsScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Analiz</Text>
-        {summary && (
-          <View style={styles.monthBadge}>
-            <Text style={styles.monthText}>
-              {MONTH_NAMES[summary.month - 1]} {summary.year}
-            </Text>
-          </View>
-        )}
+        <View style={styles.monthSwitch}>
+          <TouchableOpacity
+            onPress={() => shiftMonth(-1)}
+            style={styles.monthArrow}
+            accessibilityLabel="Önceki ay"
+          >
+            <Ionicons name="chevron-back" size={18} color={Colors.textPrimary} />
+          </TouchableOpacity>
+          <Text style={styles.monthText}>
+            {MONTH_NAMES[period.month - 1]} {period.year}
+          </Text>
+          <TouchableOpacity
+            onPress={() => shiftMonth(1)}
+            style={[styles.monthArrow, isCurrentMonth && { opacity: 0.3 }]}
+            disabled={isCurrentMonth}
+            accessibilityLabel="Sonraki ay"
+          >
+            <Ionicons name="chevron-forward" size={18} color={Colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} tintColor={Colors.primary} />}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={refetch} tintColor={Colors.accent} />}
       >
         {/* Net Kar hero */}
-        <Card style={[styles.heroCard, { backgroundColor: netProfit >= 0 ? Colors.primary : Colors.danger }]}>
-          <Text style={styles.heroLabel}>Net Kar</Text>
-          <Text style={styles.heroAmount}>{formatCurrency(netProfit)}</Text>
+        <Card style={styles.heroCard}>
+          <Text style={styles.heroLabel}>NET KÂR</Text>
+          <Text style={[styles.heroAmount, netProfit < 0 && { color: Colors.dangerOnDark }]}>
+            {formatCurrency(netProfit)}
+          </Text>
           <View style={styles.heroStats}>
             <View>
               <Text style={styles.heroStatLabel}>Satışlar</Text>
@@ -110,7 +135,7 @@ export default function AnalyticsScreen() {
                   label={p.product_name}
                   amount={p.total_revenue}
                   max={maxProduct}
-                  color={Colors.primary}
+                  color={Colors.accent}
                 />
               ))}
             </Card>
@@ -190,26 +215,32 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     letterSpacing: -0.3,
   },
-  monthBadge: {
-    backgroundColor: Colors.surfaceSecondary,
+  monthSwitch: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  monthArrow: {
+    width: 32,
+    height: 32,
     borderRadius: Radius.sm,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   monthText: {
-    fontSize: FontSize.xs,
-    color: Colors.textSecondary,
+    minWidth: 92,
+    textAlign: 'center',
+    fontSize: FontSize.sm,
+    color: Colors.textPrimary,
     fontWeight: '600',
   },
 
   scroll: { padding: Spacing.lg, gap: Spacing.md },
 
-  heroCard: { gap: Spacing.sm },
+  heroCard: { gap: Spacing.sm, backgroundColor: Colors.primary, borderWidth: 0 },
   heroLabel: {
     fontSize: FontSize.xs,
-    color: 'rgba(255,255,255,0.7)',
-    fontWeight: '600',
-    letterSpacing: 0.3,
+    color: Colors.onDarkMuted,
+    fontWeight: '700',
+    letterSpacing: 1,
   },
   heroAmount: {
     fontSize: 30,
@@ -223,8 +254,8 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     gap: Spacing.md,
   },
-  heroSep: { width: 0.5, height: 28, backgroundColor: 'rgba(255,255,255,0.25)' },
-  heroStatLabel: { fontSize: FontSize.xs, color: 'rgba(255,255,255,0.65)', fontWeight: '500', marginBottom: 2 },
+  heroSep: { width: 1, height: 28, backgroundColor: Colors.onDarkBorder },
+  heroStatLabel: { fontSize: FontSize.xs, color: Colors.onDarkMuted, fontWeight: '500', marginBottom: 2 },
   heroStatValue: { fontSize: FontSize.md, color: Colors.white, fontWeight: '700' },
 
   barRow: { marginBottom: Spacing.md },

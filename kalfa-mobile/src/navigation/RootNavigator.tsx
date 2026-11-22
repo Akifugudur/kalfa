@@ -41,7 +41,7 @@ export default function RootNavigator() {
           style={{ width: 240, height: 90 }}
           resizeMode="contain"
         />
-        <ActivityIndicator color={Colors.primary} size="large" />
+        <ActivityIndicator color={Colors.accent} size="large" />
       </View>
     );
   }

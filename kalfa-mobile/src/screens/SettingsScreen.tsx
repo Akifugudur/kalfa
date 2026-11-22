@@ -66,7 +66,7 @@ export default function SettingsScreen({ navigation }: RootStackScreenProps<'Set
   if (loading) {
     return (
       <SafeAreaView style={styles.centered}>
-        <ActivityIndicator color={Colors.primary} />
+        <ActivityIndicator color={Colors.accent} />
       </SafeAreaView>
     );
   }
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   infoLabel: { fontSize: FontSize.sm, color: Colors.textSecondary },
   infoValue: { fontSize: FontSize.sm, fontWeight: '600', color: Colors.textPrimary },
   editBtn: { marginTop: Spacing.md, alignSelf: 'flex-end' },
-  editBtnText: { fontSize: FontSize.sm, color: Colors.primary, fontWeight: '500' },
+  editBtnText: { fontSize: FontSize.sm, color: Colors.accent, fontWeight: '500' },
   editForm: { gap: Spacing.md },
   field: { gap: Spacing.xs },
   fieldLabel: { fontSize: 10, color: Colors.textTertiary, fontWeight: '600', letterSpacing: 0.5 },

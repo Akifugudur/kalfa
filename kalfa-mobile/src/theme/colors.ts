@@ -1,34 +1,54 @@
+// Palette taken from the Kalfa logo: charcoal shop shutter + red / orange /
+// amber bars. Green and red keep their money meaning (in / out).
 export const Colors = {
-  // Marka
-  primary: '#1D9E75',
-  primaryLight: '#E1F5EE',
-  primaryDark: '#085041',
-  primaryMid: '#0F6E56',
+  // Brand: charcoal (headers, primary buttons, selected chips)
+  primary: '#1C1E23',
+  primaryLight: '#EEEDEA',
+  primaryDark: '#0F1013',
+  primaryMid: '#3B3E46',
 
-  // Gider / Uyarı
-  danger: '#D85A30',
-  dangerLight: '#FAECE7',
-  dangerDark: '#712B13',
-  dangerMid: '#993C1D',
+  // Accent: logo orange (active tab, links, loading, highlights)
+  accent: '#E8711C',
+  accentLight: '#FDEEDF',
+  accentDark: '#B4540E',
 
-  // Uyarı (düşük stok)
-  warning: '#BA7517',
-  warningLight: '#FAEEDA',
-  warningDark: '#412402',
+  // Money in: income, receivables, healthy stock
+  success: '#15865A',
+  successLight: '#E2F3EA',
+  successMid: '#0F6F49',
+  successDark: '#0A4E33',
 
-  // Arkaplanlar
-  background: '#F5F4F0',
+  // Money out: expenses, debts
+  danger: '#D33A2A',
+  dangerLight: '#FCE8E5',
+  dangerDark: '#7A1E14',
+  dangerMid: '#B02E20',
+
+  // Low stock / attention (logo amber)
+  warning: '#B97606',
+  warningLight: '#FDF1D8',
+  warningDark: '#5E3C00',
+
+  // Backgrounds
+  background: '#F6F5F2',
   surface: '#FFFFFF',
-  surfaceSecondary: '#F0EFE9',
+  surfaceSecondary: '#EFEDE8',
 
-  // Metin
-  textPrimary: '#1A1A1A',
-  textSecondary: '#6B6B6B',
-  textTertiary: '#9E9E9E',
+  // Text
+  textPrimary: '#17181C',
+  textSecondary: '#5F626A',
+  textTertiary: '#9A9CA3',
 
-  // Kenarlık
-  border: '#E5E3DB',
-  borderStrong: '#C8C5BC',
+  // Borders
+  border: '#E7E4DD',
+  borderStrong: '#CDC9C0',
+
+  // On dark (charcoal) surfaces
+  onDark: '#FFFFFF',
+  onDarkMuted: 'rgba(255,255,255,0.62)',
+  onDarkBorder: 'rgba(255,255,255,0.12)',
+  successOnDark: '#5FD39C',
+  dangerOnDark: '#FF8A7A',
 
   // Diğer
   white: '#FFFFFF',

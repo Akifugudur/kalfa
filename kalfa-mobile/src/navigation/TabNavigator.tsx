@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Colors, FontSize, Spacing } from '../theme/colors';
@@ -16,6 +17,14 @@ const TAB_LABELS: Record<keyof TabParamList, string> = {
   Inventory: 'Stok',
   Payments: 'Ödemeler',
   Analytics: 'Analiz',
+};
+
+type IconName = React.ComponentProps<typeof Ionicons>['name'];
+const TAB_ICONS: Record<keyof TabParamList, [IconName, IconName]> = {
+  Home: ['home', 'home-outline'],
+  Inventory: ['cube', 'cube-outline'],
+  Payments: ['wallet', 'wallet-outline'],
+  Analytics: ['stats-chart', 'stats-chart-outline'],
 };
 
 function CustomTabBar({ state, navigation }: BottomTabBarProps) {
@@ -44,6 +53,11 @@ function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             activeOpacity={0.7}
           >
             <View style={[styles.indicator, focused && styles.indicatorActive]} />
+            <Ionicons
+              name={TAB_ICONS[route.name as keyof TabParamList][focused ? 0 : 1]}
+              size={22}
+              color={focused ? Colors.textPrimary : Colors.textTertiary}
+            />
             <Text style={[styles.label, focused ? styles.labelActive : styles.labelInactive]}>
               {label}
             </Text>
@@ -74,7 +88,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderTopWidth: 0.5,
     borderTopColor: Colors.border,
-    height: 60,
+    height: 64,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
@@ -85,25 +99,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 4,
+    gap: 3,
+    paddingTop: 2,
   },
   indicator: {
     position: 'absolute',
     top: 0,
-    width: '60%',
-    height: 2.5,
+    width: 32,
+    height: 3,
     borderRadius: 2,
     backgroundColor: 'transparent',
   },
   indicatorActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.accent,
   },
   label: {
     fontSize: 11,
     fontWeight: '500',
   },
   labelActive: {
-    color: Colors.primary,
+    color: Colors.textPrimary,
     fontWeight: '700',
   },
   labelInactive: {

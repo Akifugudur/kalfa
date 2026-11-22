@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import ModalSheet from '../components/ModalSheet';
 import { Colors, FontSize, Radius, Spacing } from '../theme/colors';
 import type { RootStackScreenProps } from '../navigation/types';
@@ -7,27 +8,27 @@ import type { RootStackScreenProps } from '../navigation/types';
 const OPTIONS = [
   {
     key: 'sale',
-    label: 'Satis Yap',
-    sub: 'Stoktan dus, gelir kaydet',
-    abbr: 'SAT',
-    bg: Colors.primaryLight,
-    color: Colors.primaryMid,
+    label: 'Satış Yap',
+    sub: 'Stoktan düş, gelir kaydet',
+    icon: 'cart-outline',
+    bg: Colors.successLight,
+    color: Colors.successMid,
     screen: 'SaleModal' as const,
   },
   {
     key: 'collection',
     label: 'Tahsilat',
     sub: 'Alacak tahsil et',
-    abbr: 'TAH',
-    bg: Colors.primaryLight,
-    color: Colors.primaryMid,
+    icon: 'cash-outline',
+    bg: Colors.successLight,
+    color: Colors.successMid,
     screen: 'CollectionModal' as const,
   },
   {
     key: 'other',
-    label: 'Diger Gelir',
-    sub: 'Serbest gelir girisi',
-    abbr: 'GEL',
+    label: 'Diğer Gelir',
+    sub: 'Serbest gelir girişi',
+    icon: 'add-circle-outline',
     bg: Colors.surfaceSecondary,
     color: Colors.textSecondary,
     screen: 'CollectionModal' as const,
@@ -46,13 +47,13 @@ export default function PlusModal({ navigation }: RootStackScreenProps<'PlusModa
             onPress={() => navigation.navigate(opt.screen as any, {})}
           >
             <View style={[styles.iconWrap, { backgroundColor: opt.bg }]}>
-              <Text style={[styles.abbr, { color: opt.color }]}>{opt.abbr}</Text>
+              <Ionicons name={opt.icon} size={22} color={opt.color} />
             </View>
             <View style={styles.optionText}>
               <Text style={styles.optionLabel}>{opt.label}</Text>
               <Text style={styles.optionSub}>{opt.sub}</Text>
             </View>
-            <Text style={styles.chevron}>{'>'}</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textTertiary} />
           </TouchableOpacity>
         ))}
       </View>
@@ -69,7 +70,7 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
     backgroundColor: Colors.surface,
     borderRadius: Radius.md,
-    borderWidth: 0.5,
+    borderWidth: 1,
     borderColor: Colors.border,
   },
   iconWrap: {
@@ -79,13 +80,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  abbr: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
   optionText: { flex: 1 },
   optionLabel: { fontSize: FontSize.md, fontWeight: '600', color: Colors.textPrimary },
   optionSub: { fontSize: FontSize.xs, color: Colors.textSecondary, marginTop: 2 },
-  chevron: { fontSize: 18, color: Colors.textTertiary, fontWeight: '300' },
 });
