@@ -1,5 +1,7 @@
-from datetime import date, datetime, timezone
+from datetime import date
 from calendar import monthrange
+
+from app.clock import now_local
 
 from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +11,6 @@ from app.models.payment_reminder import PaymentReminder
 from app.models.product import Product
 from app.models.transaction import PaymentMethod, Transaction, TransactionType
 from app.schemas.analytics import (
-    AnalyticsDashboard,
     CategoryStat,
     HomeStats,
     MonthlySummary,
@@ -147,7 +148,7 @@ async def get_expense_by_category(
 
 
 async def get_home_stats(db: AsyncSession) -> HomeStats:
-    now = datetime.now(timezone.utc)
+    now = now_local()
     year, month = now.year, now.month
     today = now.date()
 

@@ -1,15 +1,23 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import select, func, desc
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.product import Product
 from app.schemas.product import ProductCreate, ProductUpdate, ProductAddStock
 
 
-async def get_product(db: AsyncSession, product_id: uuid.UUID) -> Product | None:
-    result = await db.execute(select(Product).where(Product.id == product_id))
+async def get_product(
+    db: AsyncSession, product_id: uuid.UUID, *, for_update: bool = False
+) -> Product | None:
+    """Fetch a product. With ``for_update`` the row is locked until the
+    request's transaction ends, so concurrent stock changes queue up instead
+    of overwriting each other."""
+    q = select(Product).where(Product.id == product_id)
+    if for_update:
+        q = q.with_for_update()
+    result = await db.execute(q)
     return result.scalar_one_or_none()
 
 
@@ -28,7 +36,8 @@ async def get_products(
         q = q.where(Product.name.ilike(f"%{search}%"))
     if only_low_stock:
         q = q.where(Product.stock_quantity <= Product.low_stock_threshold)
-    q = q.order_by(Product.name).offset(skip).limit(limit)
+    q = q.order_by(Product.name, Product.id)  # id: stable order for paging
+    q = q.offset(skip).limit(limit)
     result = await db.execute(q)
     return list(result.scalars().all())
 

@@ -2,11 +2,12 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, and_
+from sqlalchemy import and_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
 from app.models.debt import Debt, DebtDirection
+from app.models.transaction import Transaction
 from app.services.sale_service import apply_payment_to_debt, build_collection
 from app.schemas.debt import DebtCreate, DebtPartialPayment, DebtResponse, DebtUpdate
 
@@ -58,7 +59,20 @@ async def update_debt(
     debt = result.scalar_one_or_none()
     if not debt:
         raise HTTPException(status_code=404, detail="Borç/alacak bulunamadı")
-    for field, value in data.model_dump(exclude_none=True).items():
+    changes = data.model_dump(exclude_none=True)
+    new_amount = changes.pop("amount", None)
+    if new_amount is not None:
+        # Keep what has already been paid; only the open part moves.
+        already_paid = float(debt.amount) - float(debt.remaining_amount)
+        if new_amount < already_paid:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Tutar, ödenmiş kısımdan ({already_paid:.2f} TL) az olamaz",
+            )
+        debt.amount = new_amount
+        debt.remaining_amount = round(new_amount - already_paid, 2)
+        debt.is_paid = debt.remaining_amount <= 0
+    for field, value in changes.items():
         setattr(debt, field, value)
     debt.updated_at = datetime.now(timezone.utc)
     await db.flush()
@@ -71,7 +85,9 @@ async def partial_payment(
     debt_id: uuid.UUID, data: DebtPartialPayment, db: AsyncSession = Depends(get_db)
 ):
     """Kısmi ödeme yap — remaining_amount düşer, tamamlandıysa is_paid=True."""
-    result = await db.execute(select(Debt).where(Debt.id == debt_id))
+    result = await db.execute(
+        select(Debt).where(Debt.id == debt_id).with_for_update()
+    )
     debt = result.scalar_one_or_none()
     if not debt:
         raise HTTPException(status_code=404, detail="Borç/alacak bulunamadı")
@@ -95,5 +111,12 @@ async def delete_debt(debt_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     debt = result.scalar_one_or_none()
     if not debt:
         raise HTTPException(status_code=404, detail="Borç/alacak bulunamadı")
+    # Sales and collections keep their history; they just stop pointing at
+    # the deleted record.
+    await db.execute(
+        update(Transaction)
+        .where(Transaction.related_debt_id == debt.id)
+        .values(related_debt_id=None)
+    )
     await db.delete(debt)
     await db.flush()

@@ -1,10 +1,10 @@
-from datetime import datetime, timezone
+from app.clock import now_local
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_db
-from app.schemas.analytics import AnalyticsDashboard, HomeStats, MonthlySummary
+from app.schemas.analytics import AnalyticsDashboard, HomeStats
 from app.services import analytics_service
 
 router = APIRouter()
@@ -23,7 +23,7 @@ async def dashboard(
     db: AsyncSession = Depends(get_db),
 ):
     """Analiz ekranı — aylık özet, en çok satanlar, gider dağılımı."""
-    now = datetime.now(timezone.utc)
+    now = now_local()
     y = year or now.year
     m = month or now.month
 

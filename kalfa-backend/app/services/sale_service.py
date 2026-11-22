@@ -8,8 +8,8 @@ from datetime import date, datetime, timezone
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clock import today_local
 from app.models.debt import Debt, DebtDirection, DebtType
-from app.models.product import Product
 from app.models.transaction import PaymentMethod, Transaction, TransactionType
 from app.schemas.transaction import SaleCreate, CollectionCreate, ExpenseCreate
 from app.services.product_service import get_product
@@ -24,7 +24,7 @@ async def process_sale(db: AsyncSession, data: SaleCreate) -> Transaction:
     4. Veresiyeyse müşteriye alacak (THEY_OWE) kaydı aç
     Tek DB transaction içinde — ya hepsi ya hiçbiri.
     """
-    product = await get_product(db, data.product_id)
+    product = await get_product(db, data.product_id, for_update=True)
     if not product:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -50,7 +50,7 @@ async def process_sale(db: AsyncSession, data: SaleCreate) -> Transaction:
     sale_total = data.sale_price * data.quantity
     profit = sale_total - purchase_total
 
-    sale_date = data.transaction_date or datetime.now(timezone.utc).date()
+    sale_date = data.transaction_date or today_local()
 
     # Veresiye: müşteriye alacak aç (defterdeki "borç" sayfası)
     debt = None
@@ -121,7 +121,7 @@ def build_collection(
         note=note,
         related_person=person,
         related_debt_id=debt_id,
-        transaction_date=tx_date or datetime.now(timezone.utc).date(),
+        transaction_date=tx_date or today_local(),
     )
 
 
@@ -131,7 +131,7 @@ async def process_collection(db: AsyncSession, data: CollectionCreate) -> Transa
     aynı DB transaction içinde düşer — tahsilat ve borç hep tutarlı kalır.
     """
     if data.related_debt_id:
-        debt = await db.get(Debt, data.related_debt_id)
+        debt = await db.get(Debt, data.related_debt_id, with_for_update=True)
         if not debt or debt.direction != DebtDirection.THEY_OWE:
             raise HTTPException(status_code=404, detail="Alacak bulunamadı")
         apply_payment_to_debt(debt, data.amount)
@@ -153,7 +153,7 @@ async def process_expense(db: AsyncSession, data: ExpenseCreate) -> Transaction:
         amount=data.amount,
         category=data.category.value if data.category else None,
         note=data.note,
-        transaction_date=data.transaction_date or datetime.now(timezone.utc).date(),
+        transaction_date=data.transaction_date or today_local(),
     )
     db.add(tx)
     await db.flush()

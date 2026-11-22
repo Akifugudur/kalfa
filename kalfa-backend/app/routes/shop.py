@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.clock import today_local
 from app.db import get_db
 from app.models.employee import Employee
 from app.models.payment_reminder import PaymentReminder
@@ -84,7 +85,7 @@ async def complete_onboarding(data: OnboardingData, db: AsyncSession = Depends(g
 
     # Otomatik hatırlatıcı oluştur
     from datetime import date
-    today = datetime.now(timezone.utc).date()
+    today = today_local()
     import calendar
     _, last_day = calendar.monthrange(today.year, today.month)
     first_next = date(today.year, today.month % 12 + 1, 1) if today.month < 12 else date(today.year + 1, 1, 1)

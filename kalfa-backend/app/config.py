@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "postgresql+asyncpg://kalfa:kalfa_secret@localhost:5432/kalfa_db"
     SECRET_KEY: str = "change_me_in_production"
     ENVIRONMENT: str = "development"
+    # Business dates (sales, expenses, "this month") use the shop's local time.
+    TIMEZONE: str = "Europe/Istanbul"
 
     @property
     def is_dev(self) -> bool:

@@ -6,6 +6,7 @@ from sqlalchemy import Date, DateTime, ForeignKey, Integer, Numeric, String, Tex
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.clock import today_local
 from app.db import Base
 
 
@@ -74,7 +75,7 @@ class Transaction(Base):
 
     # Tarih
     transaction_date: Mapped[date] = mapped_column(
-        Date, default=lambda: datetime.now(timezone.utc).date(), nullable=False, index=True
+        Date, default=today_local, nullable=False, index=True
     )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

@@ -16,11 +16,11 @@ class DebtCreate(BaseModel):
 
 
 class DebtUpdate(BaseModel):
-    person_name: str | None = None
+    """Editable fields. The remaining amount and paid status only change
+    through payments (POST /debts/{id}/pay), so they always add up."""
+    person_name: str | None = Field(None, min_length=1, max_length=200)
     amount: float | None = Field(None, gt=0)
-    remaining_amount: float | None = Field(None, ge=0)
     due_date: date | None = None
-    is_paid: bool | None = None
     note: str | None = None
 
 

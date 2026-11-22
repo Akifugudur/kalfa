@@ -23,10 +23,12 @@ router = APIRouter()
 async def list_products(
     search: str | None = Query(None, description="Ürün adına göre ara"),
     low_stock_only: bool = Query(False, description="Sadece düşük stokluları göster"),
+    skip: int = Query(0, ge=0, description="Atlanacak ürün sayısı (sayfalama)"),
+    limit: int = Query(50, ge=1, le=200, description="Sayfa boyutu"),
     db: AsyncSession = Depends(get_db),
 ):
     return await product_service.get_products(
-        db, search=search, only_low_stock=low_stock_only
+        db, search=search, only_low_stock=low_stock_only, skip=skip, limit=limit
     )
 
 
@@ -66,7 +68,7 @@ async def add_stock(
     product_id: uuid.UUID, data: ProductAddStock, db: AsyncSession = Depends(get_db)
 ):
     """Stok ekle — isteğe bağlı olarak alış fiyatını günceller."""
-    product = await product_service.get_product(db, product_id)
+    product = await product_service.get_product(db, product_id, for_update=True)
     if not product:
         raise HTTPException(status_code=404, detail="Ürün bulunamadı")
     return await product_service.add_stock(db, product, data)
