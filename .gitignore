@@ -13,9 +13,6 @@ build/
 !.env.example
 *.log
 
-# ─── Docker ─────────────────────────────────────────
-.dockerignore
-
 # ─── Node / Expo / React Native ─────────────────────
 kalfa-mobile/node_modules/
 kalfa-mobile/.expo/

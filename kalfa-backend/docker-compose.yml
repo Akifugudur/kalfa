@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
@@ -10,7 +8,9 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kalfa_secret}
       POSTGRES_DB: ${POSTGRES_DB:-kalfa_db}
     ports:
-      - "5432:5432"
+      # Only reachable from this machine (set DB_PORT if 5432 is taken).
+      # The API reaches the database over the compose network.
+      - "127.0.0.1:${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,6 +30,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-kalfa}:${POSTGRES_PASSWORD:-kalfa_secret}@db:5432/${POSTGRES_DB:-kalfa_db}
       SECRET_KEY: ${SECRET_KEY:-change_me_in_production}
       ENVIRONMENT: ${ENVIRONMENT:-development}
+      TIMEZONE: ${TIMEZONE:-Europe/Istanbul}
     ports:
       - "8000:8000"
     volumes:

@@ -1,47 +1,52 @@
+"""Load demo products into a running Kalfa API from a CSV file.
+
+Usage:
+    python seed_products.py path/to/products.csv [--api http://localhost:8000/api]
+
+The CSV needs the columns Part_Name, Price (USD) and Stock_Quantity.
+Prices are converted to TRY; the sale price gets a 30% margin.
+"""
+import argparse
 import csv
+import os
+import sys
+
 import requests
-import json
 
-BASE_URL = "http://localhost:8000/api"
-CSV_PATH = r"truck_spare_parts_dataset.csv"
+USD_TO_TRY = float(os.environ.get("USD_TO_TRY", "53"))
+MARGIN = 1.30
+MAX_STOCK = 999
 
-# USD -> TL kur yaklaşımı
-USD_TO_TL = 53
 
-def seed():
-    added = 0
-    skipped = 0
-    
-    with open(CSV_PATH, newline='', encoding='utf-8') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+def seed(csv_path: str, api: str) -> int:
+    added = skipped = 0
+    with open(csv_path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            name = row.get("Part_Name", "?")
             try:
-                price_usd = float(row['Price'])
-                purchase_tl = round(price_usd * USD_TO_TL, 2)
-                sale_tl = round(purchase_tl * 1.30, 2)  # %30 kar marjı
-                stock = min(int(row['Stock_Quantity']), 999)  # max 999
-                
+                purchase = round(float(row["Price"]) * USD_TO_TRY, 2)
                 payload = {
-                    "name": row['Part_Name'],
-                    "purchase_price": purchase_tl,
-                    "sale_price": sale_tl,
-                    "stock_quantity": stock,
+                    "name": name,
+                    "purchase_price": purchase,
+                    "sale_price": round(purchase * MARGIN, 2),
+                    "stock_quantity": min(int(row["Stock_Quantity"]), MAX_STOCK),
                     "unit": "adet",
-                    "low_stock_threshold": 5
+                    "low_stock_threshold": 5,
                 }
-                
-                resp = requests.post(f"{BASE_URL}/products/", json=payload, timeout=10)
-                if resp.status_code in (200, 201):
-                    added += 1
-                    print(f"✓ {row['Part_Name']} — alış: {purchase_tl}₺ / satış: {sale_tl}₺ / stok: {stock}")
-                else:
-                    skipped += 1
-                    print(f"✗ {row['Part_Name']}: {resp.status_code} {resp.text[:100]}")
-            except Exception as e:
+                resp = requests.post(f"{api}/products/", json=payload, timeout=10)
+                resp.raise_for_status()
+                added += 1
+            except Exception as exc:  # keep going, report at the end
                 skipped += 1
-                print(f"✗ {row.get('Part_Name','?')}: {e}")
-    
-    print(f"\n✅ Tamamlandı: {added} eklendi, {skipped} atlandı")
+                print(f"skipped {name}: {exc}", file=sys.stderr)
+
+    print(f"{added} products added, {skipped} skipped")
+    return 0 if skipped == 0 else 1
+
 
 if __name__ == "__main__":
-    seed()
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("csv_path", help="CSV file with Part_Name, Price, Stock_Quantity")
+    parser.add_argument("--api", default="http://localhost:8000/api", help="Kalfa API base URL")
+    args = parser.parse_args()
+    sys.exit(seed(args.csv_path, args.api))
